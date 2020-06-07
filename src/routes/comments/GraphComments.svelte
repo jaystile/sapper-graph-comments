@@ -189,8 +189,23 @@
 
 <svelte:window on:keydown|preventDefault|stopPropagation={handleKeyboardEvent}/>
 
+
 <div>
-Graph Comments
+  <div class="row">
+    <div class="col-sm">
+      Graph Comments
+    </div>
+    <div class="col-sm">
+      two of three columns
+    </div>
+    <div class="col-sm">
+      three of three columns
+    </div>
+  </div>
+</div>
+
+
+<div>
 
 <div>
 {#each previousStates as previousState}

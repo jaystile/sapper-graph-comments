@@ -4,19 +4,15 @@
 	export let segment;
 </script>
 
-<style>
-	main {
-		/* position: relative;
-		max-width: 56em; */
-		background-color: white;
-		/* padding: 2em;
-		margin: 0 auto;
-		box-sizing: border-box; */
-	}
+
+<style lang="scss" global>
+  @import "bootswatch/dist/darkly/variables";
+  @import "bootstrap/scss/bootstrap";
+  @import "bootswatch/dist/darkly/bootswatch";  
 </style>
 
 <Nav {segment}/>
 
-<main>
+<main class="container">
 	<slot></slot>
 </main>

@@ -29,5 +29,6 @@
 </style>
 
 <div class:active={active}>
+{ redditContent.ups }
 { content }
 </div>
