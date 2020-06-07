@@ -1,23 +1,30 @@
 <script>
-   import RedditType from './RedditType.svelte';
-   import { DumpObjectIndented } from '../_helpers/dumpobject.js';
+	import StateView from './StateView.svelte';
+	import RedditListItem from './RedditListItem.svelte';
    export let graph;
 
-   let children = [];
-   let childView = [];
-   let childNodeName;
-   let state = {
-      node: undefined,
-      nodeModel: undefined,
-      childIndex: undefined
-   };
-   let previousStates = []
+   let states = []
    let dragState
    let threshold = 200;
 
-   function canDrill(state) {
-      if(children && children.length > 0) {
-         let edges = graph.outEdges(children[state.childIndex].name);
+   function createStateForNodeName(nodeName) {
+      let state = {
+         node: nodeName,
+         nodeModel: graph.node(nodeName),
+         childIndex: -1,
+         children: getChildNodes(nodeName)
+      };
+      if(state.children.length > 0) {
+         state.childIndex = 0;
+      }
+
+      return state;
+   }
+
+   function canDrill() {
+      let state = states[states.length-1]
+      if(state.children && state.children.length > 0) {
+         let edges = graph.outEdges(state.children[state.childIndex].name);
          if(edges && edges.length > 0) {
             return true;
          }
@@ -25,8 +32,8 @@
       return false;
    }
 
-   $: isPreviousDisabled = (previousStates && previousStates.length > 0) ? false : true;
-   $: isDrillingDisabled = !canDrill(state);
+   $: isPreviousDisabled = (states && states.length > 1) ? false : true;
+   $: isDrillingDisabled = !canDrill();
 
    function getChildNodes(nodeName) {
       let edges = graph.outEdges(nodeName);
@@ -42,28 +49,14 @@
       return destinationNodes;
    }
 
-   function setFocus(nodeName) {
-      // console.log("Graph node count: " + graph.nodeCount() + "; edge count: " + graph.edgeCount());
-      // console.debug('setFocus ' + nodeName);
-
-      state.node = nodeName;
-      state.nodeModel = graph.node(nodeName);
-      children = getChildNodes(nodeName);
-      setChildFocus(0);
-   }
 
    function setChildFocus(index) {
-      if(undefined == children || children.length == 0 || index < 0 || index >= children.length) {
+      let state = states[states.length-1];
+      if(undefined == state.children || state.children.length == 0 || index < 0 || index >= state.children.length) {
          return; // invalid index
       }
-
       state.childIndex = index;
-      state = state;
-      // Consider: Did we want to limit the things in the view?
-      // let num_previews = 3;
-      // let maxIndex = Math.min(children.length, state.childIndex+num_previews);
-      // childView = children.slice(state.childIndex,maxIndex)
-      childView = children
+      states = states;
    }
 
    function filter() {
@@ -71,40 +64,30 @@
    }
 
    function previousChild() {
-      console.log("previousChild");
-      setChildFocus(state.childIndex - 1);
+      setChildFocus(states[states.length-1].childIndex - 1);
    }
 
    function nextChild() {
-      // Selects the next child of the parent content
-      setChildFocus(state.childIndex + 1);
+      setChildFocus(states[states.length-1].childIndex + 1);
    }
 
    function previous() {
       console.log("previous");
-      if(previousStates && previousStates.length > 0) {
-         let previousState = previousStates.pop();
-         previousStates = previousStates;
-         console.log("previous state: " + JSON.stringify(state));
-         setFocus(previousState.node);
-         setChildFocus(previousState.childIndex)
+      if(states && states.length > 1) {
+         states.pop();
+         setChildFocus(states[states.length-1].childIndex)
+         states = states;
       }
    }
 
    function drill() {
-      if(!canDrill(state)) {
+      if(!canDrill()) {
          return;
       }
-      let focus = children[state.childIndex].name;
-      previousStates.push(state);
-      previousStates = previousStates;
-      state = {
-         node: undefined,
-         nodeModel: undefined,
-         childIndex: undefined
-      };
-      setFocus(focus);
-
+      let currentState = states[states.length-1];
+      let nextState = createStateForNodeName(currentState.children[currentState.childIndex].name);
+      states.push(nextState);
+      states = states;
    }
 
    function handleWheel(event) {
@@ -165,7 +148,8 @@
       console.log("Graph is undefined. No work to be done.")
    }
    else {
-      setFocus(graph.neighbors('root')[0]);
+      states.push(createStateForNodeName(graph.neighbors('root')[0]));
+      states = states;
    }
 
 </script>
@@ -183,36 +167,11 @@
       display: none;
    }
 
-
-
 </style>
 
 <svelte:window on:keydown|preventDefault|stopPropagation={handleKeyboardEvent}/>
 
 
-<div>
-  <div class="row">
-    <div class="col-sm">
-      Graph Comments
-    </div>
-    <div class="col-sm">
-      two of three columns
-    </div>
-    <div class="col-sm">
-      three of three columns
-    </div>
-  </div>
-</div>
-
-
-<div>
-
-<div>
-{#each previousStates as previousState}
-   <RedditType redditContent={previousState.nodeModel} />
-{/each}
-<RedditType redditContent={state.nodeModel} />
-</div>
 
 <div class="grid debug">
 	<button on:click={filter}>filter</button>
@@ -221,7 +180,7 @@
 
 	<button on:click={previous} disabled={isPreviousDisabled}>previous</button>
 	<div>
-      { state.childIndex }
+      { states[states.length-1].childIndex }
    </div>
 	<button on:click={drill} disabled={isDrillingDisabled}>drill</button>
 
@@ -229,13 +188,24 @@
 	<button on:click={nextChild}>down</button>
 	<div></div>
 </div>
+
 <hr />
 
-<div id="childNodeView" on:wheel|preventDefault|stopPropagation={handleWheel}>
-{#each childView as childNode, i}
-   <div draggable="true" on:click={() => handleClickChild(i) } on:dragstart={handleDragstartChild} on:dragend={handleDragendChild}>
-   <RedditType redditContent={childNode} active={(i == state.childIndex)} />
-   </div >
-{/each}
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <StateView states={states} />
+    </div>
+
+    <div class="col">
+      <div id="childNodeView" on:wheel|preventDefault|stopPropagation={handleWheel}>
+      {#each states[states.length-1].children as childNode, i}
+         <div draggable="true" on:click={() => handleClickChild(i) } on:dragstart={handleDragstartChild} on:dragend={handleDragendChild}>
+         <RedditListItem redditContent={childNode} active={(i == states[states.length-1].childIndex)} />
+         </div >
+      {/each}
+      </div>
+    </div>
+  </div>
 </div>
-</div>
+
