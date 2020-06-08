@@ -6,7 +6,7 @@
 </script>
 
 
-<div class="card mb-3">
+<div class="sticky-top card  border-primary mb-3">
 <div class="card-header">
   <h3>
   <span class="badge badge-primary badge-pill">{ root.ups }</span>
@@ -14,11 +14,14 @@
     { root.url }
   {/if}
   </h3>
-  { states[0].nodeModel.permalink }
+  
 </div>
 <ul class="list-group list-group-flush">
 {#each states as state}
     <li class="list-group-item">{ extractContent(state.nodeModel) }</li>
 {/each}
 </ul>
+<div class="card-footer text-muted">
+  { states[0].nodeModel.permalink }
+</div>
 </div>
