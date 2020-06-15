@@ -10,8 +10,20 @@ import * as sapper from '@sapper/server';
 
 const { PORT, NODE_ENV, REDDIT_AGENT } = process.env;
 const dev = NODE_ENV === 'development';
-
 const app = express();
+
+async function sessionFilter(req, res, next) {
+	if(typeof req.session === 'undefined') {
+		req.session = { user: false, state: {} }
+	}
+    // console.log("/server.js:sessionFilter: " + JSON.stringify(req.session));
+	next()		
+}
+async function urlTraceFilter(req, res, next) {
+	// console.log("server.js:urlTrace url=" + req.url);
+	next()		
+}
+
 
 // TODO: Warning The default server-side session storage, MemoryStore, is purposely not designed for a production environment. 
 // It will leak memory under most conditions, does not scale past a single process, and is meant for debugging and developing.
@@ -25,6 +37,8 @@ app.use(session({
 app.use(
 	compression({ threshold: 0 }),
 	sirv('static', { dev }),
+	urlTraceFilter,
+	sessionFilter,
 	sapper.middleware({
 		session: (req, res) => ({
 			user: req.session.user,
@@ -33,18 +47,6 @@ app.use(
 		})	
 	})
 )
-
-// Setting default values and for debugging purposes
-app.use(function(req, res, next) {
-	if(typeof req.session === 'undefined') {
-		req.session = { user: false, state: {} }
-	}
-
-	console.log("DEBUG: " + req.session.user);
-	// console.log("DEBUG: " + req.session.refresh_token);
-	require('dotenv').config();
-	next()
-})	
 
 
 app.listen(PORT, err => {

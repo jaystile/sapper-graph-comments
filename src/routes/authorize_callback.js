@@ -9,12 +9,6 @@ export function get(req, res, next) {
     let sessionID = (state.split(" "))[0];
     let callback_url = (state.split(" "))[1];
 
-    // console.log("code: " + code);
-    // console.log("decoded state: " + state);
-    // console.log("sessionID from state: " + sessionID);
-    // console.log("callback_url from state: " + callback_url);
-    // console.log("Session: " + JSON.stringify(req.session));
-
     if(req.sessionID === undefined || (req.sessionID != sessionID)) {
       console.error("Session id mismatch. Expected: [" + req.sessionID + "] Received: [" + sessionID + "]");
     }

@@ -3,34 +3,20 @@
     export async function preload(page, session) {
 
         let { user } = session;
-        let identity = {}
 
 		if (!user) {
-			return this.redirect(302, '/authorize?callback_url=/user');
-		}
-        else {
-            // console.log("/user session: " + JSON.stringify(session));
-            let headers = {
-                    'User-Agent': session.agent,
-                    'Authorization': 'bearer ' + session.token.access_token
-            }
-            let resource = 'https://oauth.reddit.com/api/v1/me'
-            let init = {
-                method: 'GET',
-                headers: headers
-            }
-
-            const res = await this.fetch(resource, init);
-            let responseHeaders = res.headers;
-            identity = await res.json();
+            console.log("/user.svelte initiating callback: '/authorize?callback_url=%s'", page.path);
+			return this.redirect(302, '/authorize?callback_url='+page.path);
         }
 
-		return { identity };
+        let identity = await(await this.fetch("/reddit/api/v1/me", { credentials: 'include' })).json();
+        console.log("Identity: " + JSON.stringify(identity));
+        return { identity }
 	}
 </script>
 
 <script>
-    export let identity;
+    export let identity
 </script>
 
 <svelte:head>
@@ -38,5 +24,4 @@
 </svelte:head>
 
 <h1>User</h1>
-
-<p>{ JSON.stringify(identity) }</p>
+    <p>{ JSON.stringify(identity) }</p>
