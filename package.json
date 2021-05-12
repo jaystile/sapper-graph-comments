@@ -26,7 +26,7 @@
     "https": "^1.0.0",
     "node-sass": "^4.14.1",
     "polka": "next",
-    "postcss": "^7.0.32",
+    "postcss": "^8.2.10",
     "sirv": "^0.4.0",
     "svelte-preprocess": "^3.9.4"
   },
